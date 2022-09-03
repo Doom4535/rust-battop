@@ -12,10 +12,6 @@ keywords = ["tui", "battery", "linux", "macos"]
 license = "Apache-2.0 OR MIT"
 exclude = ["assets"]
 
-[badges]
-travis-ci = { repository = "svartalf/rust-battop", branch = "master" }
-maintenance = { status = "actively-developed" }
-
 [dependencies]
 battery = "^0.7"
 structopt = { version = "0.2", default-features = false }
