@@ -272,7 +272,7 @@ impl<'i> Painter<'i> {
             Units::Human => format!(
                 "{:.2} {}",
                 battery.energy().get::<watt_hour>(),
-                watt_hour::abbreviation()
+                "Wh"
             ),
             Units::Si => format!("{:.2} {}", battery.energy().get::<joule>(), joule::abbreviation()),
         };
@@ -280,7 +280,7 @@ impl<'i> Painter<'i> {
             Units::Human => format!(
                 "{:.2} {}",
                 battery.energy_full().get::<watt_hour>(),
-                watt_hour::abbreviation()
+                "Wh"
             ),
             Units::Si => format!("{:.2} {}", battery.energy_full().get::<joule>(), joule::abbreviation()),
         };
@@ -288,7 +288,7 @@ impl<'i> Painter<'i> {
             Units::Human => format!(
                 "{:.2} {}",
                 battery.energy_full_design().get::<watt_hour>(),
-                watt_hour::abbreviation()
+                "Wh"
             ),
             Units::Si => format!(
                 "{:.2} {}",
