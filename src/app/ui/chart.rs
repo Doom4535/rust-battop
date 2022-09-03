@@ -6,6 +6,7 @@ use battery::units::thermodynamic_temperature::{degree_celsius, kelvin};
 use battery::units::Unit;
 use battery::State;
 use itertools::{Itertools, MinMaxResult};
+use tui::style::Color;
 
 use super::Units;
 use crate::app::Config;
@@ -20,21 +21,22 @@ pub enum ChartType {
 }
 
 #[derive(Debug)]
-pub struct ChartData {
+pub struct ChartData<const N: usize = 1> {
     config: Arc<Config>,
     chart_type: ChartType,
     enabled: bool,
 
     battery_state: State,
 
-    points: Vec<(f64, f64)>,
+    points_sets: [Vec<(f64, f64)>; N],
+    colors: [Color; N],
     value_latest: f64,
     value_min: f64,
     value_max: f64,
 }
 
-impl ChartData {
-    pub fn new(config: Arc<Config>, chart_type: ChartType) -> Self {
+impl<const N: usize> ChartData<N> {
+    pub fn new(config: Arc<Config>, chart_type: ChartType, colors: [Color; N]) -> Self {
         ChartData {
             config,
             chart_type,
@@ -42,7 +44,8 @@ impl ChartData {
 
             battery_state: State::Unknown,
 
-            points: Vec::with_capacity(256),
+            points_sets: [(); N].map(|()| Vec::with_capacity(256)),
+            colors,
             value_latest: 0.0,
             value_min: 100.0,
             value_max: 0.0,
@@ -58,23 +61,29 @@ impl ChartData {
     }
 
     #[allow(clippy::cast_lossless)]
-    pub fn push<T>(&mut self, value: T)
+    pub fn push<T>(&mut self, value: T, index: usize)
     where
         T: Into<f64>,
     {
         let value = value.into();
 
-        if self.points.len() == RESOLUTION {
-            self.points.remove(0);
+        if self.points_sets.iter().map(|set| set.len()).sum::<usize>() == RESOLUTION {
+            self.points_sets
+                .iter_mut()
+                .min_by_key(|set| {
+                    ordered_float::NotNan::new(set.get(0).map(|&(x, _)| x).unwrap_or(f64::INFINITY)).unwrap()
+                })
+                .unwrap()
+                .remove(0);
         }
-        for (x, _) in self.points.iter_mut() {
+        for (x, _) in self.points_sets.iter_mut().flatten() {
             *x -= 0.5;
         }
 
         self.value_latest = value;
 
-        self.points.push((RESOLUTION as f64 / 2.0, value));
-        match self.points.iter().minmax_by_key(|(_, y)| y) {
+        self.points_sets[index].push((RESOLUTION as f64 / 2.0, value));
+        match self.points_sets.iter().flatten().minmax_by_key(|(_, y)| y) {
             MinMaxResult::MinMax((_, min), (_, max)) => {
                 self.value_min = *min;
                 self.value_max = *max;
@@ -119,8 +128,13 @@ impl ChartData {
 
     // Data
 
-    pub fn points(&self) -> &[(f64, f64)] {
-        self.points.as_ref()
+    pub fn points(&self) -> [(&[(f64, f64)], Color); N] {
+        let mut ix = 0;
+        [(); N].map(|()| {
+            let i = ix;
+            ix += 1;
+            (&*self.points_sets[i], self.colors[i])
+        })
     }
 
     // X scale

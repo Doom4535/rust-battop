@@ -22,7 +22,7 @@ fn parse_duration(raw: &str) -> Result<Duration, String> {
 /// * Q, Ctrl+C, Esc: close viewer
 #[derive(StructOpt, Debug)]
 pub struct Config {
-    #[structopt(short = "v", long = "verbose", max_values = 5, parse(from_occurrences))]
+    #[structopt(short = "v", long = "verbose", parse(from_occurrences))]
     /// Verbosity level, might be repeated up to 5 times (-vvvvv).
     /// Log is accessible from the stderr.
     verbose: usize,

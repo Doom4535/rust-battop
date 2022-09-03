@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use battery::units;
+use tui::style::Color;
 
 use super::{ChartData, ChartType, Units};
 use crate::app::Config;
@@ -12,7 +13,7 @@ pub struct View {
     config: Arc<Config>,
     battery: battery::Battery,
     voltage: ChartData,
-    energy_rate: ChartData,
+    energy_rate: ChartData<2>,
     temperature: ChartData,
 }
 
@@ -21,9 +22,9 @@ impl View {
         View {
             config: config.clone(),
             battery,
-            voltage: ChartData::new(config.clone(), ChartType::Voltage),
-            energy_rate: ChartData::new(config.clone(), ChartType::EnergyRate),
-            temperature: ChartData::new(config, ChartType::Temperature),
+            voltage: ChartData::new(config.clone(), ChartType::Voltage, [Color::Green]),
+            energy_rate: ChartData::new(config.clone(), ChartType::EnergyRate, [Color::Green, Color::Red]),
+            temperature: ChartData::new(config, ChartType::Temperature, [Color::Green]),
         }
     }
 
@@ -32,19 +33,24 @@ impl View {
         manager.refresh(&mut self.battery)?;
 
         self.voltage
-            .push(self.battery.voltage().get::<units::electric_potential::volt>());
+            .push(self.battery.voltage().get::<units::electric_potential::volt>(), 0);
         *self.voltage.battery_state() = self.battery.state();
 
+        let state = self.battery.state();
+        let index = match state {
+            battery::State::Discharging => 1,
+            _ => 0,
+        };
         self.energy_rate
-            .push(self.battery.energy_rate().get::<units::power::watt>());
-        *self.energy_rate.battery_state() = self.battery.state();
+            .push(self.battery.energy_rate().get::<units::power::watt>(), index);
+        *self.energy_rate.battery_state() = state;
 
         if let Some(temp) = self.battery.temperature() {
             let value = match self.config.units() {
                 Units::Human => temp.get::<units::thermodynamic_temperature::degree_celsius>(),
                 Units::Si => temp.get::<units::thermodynamic_temperature::kelvin>(),
             };
-            self.temperature.push(value);
+            self.temperature.push(value, 0);
             *self.temperature.battery_state() = self.battery.state();
             self.temperature.enabled(true);
         } else {
@@ -83,7 +89,7 @@ impl View {
         &self.voltage
     }
 
-    pub fn energy_rate(&self) -> &ChartData {
+    pub fn energy_rate(&self) -> &ChartData<2> {
         &self.energy_rate
     }
 

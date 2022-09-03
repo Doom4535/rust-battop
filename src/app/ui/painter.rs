@@ -199,7 +199,7 @@ impl<'i> Painter<'i> {
             .render(frame, text_area);
     }
 
-    pub fn draw_chart<B: Backend>(&self, data: &ChartData, frame: &mut Frame<B>, area: Rect) {
+    pub fn draw_chart<const N: usize, B: Backend>(&self, data: &ChartData<N>, frame: &mut Frame<B>, area: Rect) {
         let title = format!(" {} ", data.title());
         let block = Block::default()
             .title(&title)
@@ -223,10 +223,12 @@ impl<'i> Painter<'i> {
             .block(block)
             .x_axis(x_axis)
             .y_axis(y_axis)
-            .datasets(&[Dataset::default()
-                .marker(Marker::Braille)
-                .style(Style::default().fg(Color::Green))
-                .data(data.points())])
+            .datasets(&data.points().map(|(set, color)| {
+                Dataset::default()
+                    .marker(Marker::Braille)
+                    .style(Style::default().fg(color))
+                    .data(set)
+            }))
             .render(frame, area)
     }
 
@@ -269,27 +271,15 @@ impl<'i> Painter<'i> {
             percent::abbreviation()
         );
         let current = &match config.units() {
-            Units::Human => format!(
-                "{:.2} {}",
-                battery.energy().get::<watt_hour>(),
-                "Wh"
-            ),
+            Units::Human => format!("{:.2} {}", battery.energy().get::<watt_hour>(), "Wh"),
             Units::Si => format!("{:.2} {}", battery.energy().get::<joule>(), joule::abbreviation()),
         };
         let last_full = &match config.units() {
-            Units::Human => format!(
-                "{:.2} {}",
-                battery.energy_full().get::<watt_hour>(),
-                "Wh"
-            ),
+            Units::Human => format!("{:.2} {}", battery.energy_full().get::<watt_hour>(), "Wh"),
             Units::Si => format!("{:.2} {}", battery.energy_full().get::<joule>(), joule::abbreviation()),
         };
         let full_design = &match config.units() {
-            Units::Human => format!(
-                "{:.2} {}",
-                battery.energy_full_design().get::<watt_hour>(),
-                "Wh"
-            ),
+            Units::Human => format!("{:.2} {}", battery.energy_full_design().get::<watt_hour>(), "Wh"),
             Units::Si => format!(
                 "{:.2} {}",
                 battery.energy_full_design().get::<joule>(),
