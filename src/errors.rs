@@ -1,3 +1,5 @@
+extern crate starship_battery as battery;
+
 use std::error;
 use std::fmt;
 use std::io;

@@ -1,5 +1,6 @@
-use std::sync::Arc;
+extern crate starship_battery as battery;
 
+use std::sync::Arc;
 use battery::units::electric_potential::volt;
 use battery::units::power::watt;
 use battery::units::thermodynamic_temperature::{degree_celsius, kelvin};

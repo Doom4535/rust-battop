@@ -13,7 +13,8 @@ license = "Apache-2.0 OR MIT"
 exclude = ["assets"]
 
 [dependencies]
-battery = "^0.7"
+#battery = "^0.7"
+starship-battery = "0.8.2"
 structopt = { version = "0.2", default-features = false }
 log = "0.4.6"
 stderrlog = "0.4.1"

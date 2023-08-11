@@ -32,6 +32,8 @@
 ///           \                                                                            /
 ///            \------------------ main window -------------------------------------------/
 /// ```
+extern crate starship_battery as battery;
+
 use std::borrow::Cow;
 use std::ops::Deref;
 use std::rc::Rc;
